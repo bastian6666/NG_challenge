@@ -1,1 +1,0 @@
-web: postgrest tutorial.conf
