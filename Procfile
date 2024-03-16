@@ -1,1 +1,1 @@
-web: bin/postgrest tutorial.conf
+web: postgrest tutorial.conf
