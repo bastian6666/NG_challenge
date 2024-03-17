@@ -26,61 +26,45 @@ class DataTransformation:
             except Exception as e:
                 print(f"An error occurred: {e}")
 
-    def transform_and_write_data_production(self):
+    def filter_and_write_data_production(self, endswith, orgtable, chunksize=1000):
         engine = create_engine(self.db_uri)
         with engine.connect() as conn:
             try:
-                for chunk in pd.read_sql_table('productionemployees', conn, chunksize=self.chunksize):
-                    # Print column names
-                    print(chunk.columns)
+                for chunk in pd.read_sql_table(orgtable, conn, chunksize=chunksize):
+                    # Filter the chunk to keep rows where 'series_id' does not end with '32'
+                    filtered_chunk = chunk[~chunk['series_id'].str.endswith(str(endswith))]
 
-                    # Print column names
-                    print(chunk.columns)
+                    # Write the filtered chunk to a new table
+                    new_table_name = self.table_name + "_new"
+                    filtered_chunk.to_sql(new_table_name, conn, if_exists='append', index=False, method='multi')
 
-                    # Filter the chunk to remove rows where 'series_id' ends with '32'e
-                    if 'footnote_cods_m5140' in chunk.columns:
-                        chunk = chunk[~chunk['series_id'].str.endswith('32')].copy()
-
-                    # Replace None values in 'footnote_codes_m5140' with a default value
-                    if 'footnote_codes_m5140' in chunk.columns:
-                        chunk['footnote_codes_m5140'] = chunk['footnote_codes_m5140'].fillna('')
-
-                    # Truncate all string columns to a maximum length of 256 characters
-                    for col in chunk.select_dtypes(include=[object]):
-                        chunk[col] = chunk[col].str.slice(0, 256)
-
-                    # Write the filtered chunk to the new table
-                    chunk.to_sql(self.table_name, conn, if_exists='append', index=False, method='multi')
-
-                print(f"Successfully wrote the filtered data to {self.table_name}")
+                print(f"Successfully wrote the filtered data to {new_table_name}")
             except Exception as e:
                 print(f"An error occurred: {e}")
+                
 
-    def filter_allemployees_based_on_production(self):
+    def filter_allemployees_based_on_production(self, orgtable, basetable):
         engine = create_engine(self.db_uri)
         with engine.connect() as conn:
             try:
                 # Read the 'production' table
-                production = pd.read_sql_table('production', conn)
+                production = pd.read_sql_table(orgtable, conn)
 
-                # Print the columns of the 'production' table
-                print("Production columns:", production.columns)
+                # Create a temporary column in 'production' with 'series_id' without the last two characters
+                production['temp_series_id'] = production['series_id'].str.slice(stop=-2)
 
-                # Remove the last two characters from the 'series_id' column in the 'production' table
-                production['series_id'] = production['series_id'].str.slice(stop=-2)
+                for chunk in pd.read_sql_table(basetable, conn, chunksize=self.chunksize):
+                    # Create a temporary column in 'chunk' with 'series_id' without the last two characters
+                    chunk['temp_series_id'] = chunk['series_id'].str.slice(stop=-2)
 
-                for chunk in pd.read_sql_table('allemployees', conn, chunksize=self.chunksize):
-                    # Print the columns of the 'allemployees' table
-                    print("Allemployees columns:", chunk.columns)
+                    # Filter the chunk to remove rows where 'temp_series_id' is in the 'production' table
+                    chunk = chunk[~chunk['temp_series_id'].isin(production['temp_series_id'])].copy()
 
-                    # Remove the last two characters from the 'series_id' column in the 'allemployees' table
-                    chunk['series_id'] = chunk['series_id'].str.slice(stop=-2)
-
-                    # Filter the chunk to remove rows where 'series_id' is in the 'production' table
-                    chunk = chunk[~chunk['series_id'].isin(production['series_id'])].copy()
+                    # Drop the temporary column from 'chunk'
+                    chunk.drop(columns=['temp_series_id'], inplace=True)
 
                     # Write the filtered chunk to the new table
-                    chunk.to_sql(self.table_name, conn, if_exists='append', index=False, method='multi')
+                    chunk.to_sql(self.table_name+'_new', conn, if_exists='append', index=False, method='multi')
 
                 print(f"Successfully wrote the filtered data to {self.table_name}")
             except Exception as e:

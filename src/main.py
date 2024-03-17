@@ -50,13 +50,24 @@ db_uri = os.getenv('DATABASE_URL')
 # Production records transformation 
 
 # Create an instance of the DataTransformation class
-data_transformation = DataTransformation(db_uri, 'production')
+# data_transformation = DataTransformation(db_uri, 'production')
 
 # Call the transform_and_write_data_production method
-data_transformation.transform_and_write_data_production()
+# data_transformation.filter_and_write_data_production(32, 'productionemployees')
+
+
+# Filter out average hourly earnings for all employees
 
 # Create an instance of the DataTransformation class
-# data_transformation = DataTransformation(db_uri, 'filtered_allemployees')
+# data_transformation = DataTransformation(db_uri, 'allemployeesearnweek')
+
+# Call the transform_and_write_data_production method
+# data_transformation.filter_and_write_data_production(13, 'allemployeesearnings')
+
+
+# Filter all employees based on production records
+# Create an instance of the DataTransformation class
+data_transformation = DataTransformation(db_uri, 'filtered_allemployees')
 
 # Call the filter_allemployees_based_on_production method
-# data_transformation.filter_allemployees_based_on_production()
+data_transformation.filter_allemployees_based_on_production("production_new", "allemployeesearnweek_new")
