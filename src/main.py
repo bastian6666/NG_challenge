@@ -7,67 +7,32 @@ from data_structure import DataTransformation
 load_dotenv()
 db_uri = os.getenv('DATABASE_URL')
 
-#Data ingest
+try:
+    # Data ingest
+    ingestor = DataIngest('../data/ce.data.90a.Government.Employment.txt', db_uri)
+    ingestor.read_and_write_data_in_chunks('government')
 
-# Women in government
-#data_path = '../data/ce.data.90a.Government.Employment.txt' 
-#table_name = 'government'  
+    ingestor = DataIngest('../data/ce.data.02b.AllRealEarningsAE.txt', db_uri)
+    ingestor.read_and_write_data_in_chunks('allemployeesearnings')
 
-# Initialize the DataIngest object with your data path and database URI
-# ingestor = DataIngest(data_path, db_uri)
+    ingestor = DataIngest('../data/ce.data.03c.AllRealEarningsPE.txt', db_uri)
+    ingestor.read_and_write_data_in_chunks('productionemployees')
 
-# Call the correct method to read the data from the CSV file and write it to the database
-# ingestor.read_and_write_data_in_chunks(table_name)
+    # Data transformation
+    transformer = DataTransformation(db_uri, 'women_in_government')
+    transformer.transform_and_write_data()
 
-# All employees earnings
-# data_path = '../data/ce.data.02b.AllRealEarningsAE.txt' 
-# table_name = 'allemployeesearnings'  
+    transformer = DataTransformation(db_uri, 'production')
+    transformer.filter_and_write_data(32, 'productionemployees') # 32 is the value for hourly earning that we dont want to consider
 
-# Initialize the DataIngest object with your data path and database URI
-# ingestor = DataIngest(data_path, db_uri)
+    transformer = DataTransformation(db_uri, 'allemployeesearnweek')
+    transformer.filter_and_write_data(13, 'allemployeesearnings') # 13 is the value for hourly earning that we dont want to consider
 
-# Call the correct method to read the data from the CSV file and write it to the database
-# ingestor.read_and_write_data_in_chunks(table_name)
+    transformer = DataTransformation(db_uri, 'filtered_allemployees')
+    transformer.filter_allemployees_based_on_production("production_new", "allemployeesearnweek_new")
 
+    transformer = DataTransformation(db_uri, None)
+    transformer.count_rows_and_calculate_ratio('production_new', 'filtered_allemployees_new', 'ratio_table')
 
-# Production and non-supervisory employees
-# data_path = '../data/ce.data.03c.AllRealEarningsPE.txt'
-# table_name = 'productionemployees'
-
-# Initialize the DataIngest object with your data path and database URI
-# ingestor = DataIngest(data_path, db_uri)
-
-# Call the correct method to read the data from the CSV file and write it to the database
-# ingestor.read_and_write_data_in_chunks(table_name)
-
-
-# Data transformation
-
-# data_transformation = DataTransformation(db_uri, 'women_in_government')
-# data_transformation.transform_and_write_data()
-
-
-# Production records transformation 
-
-# Create an instance of the DataTransformation class
-# data_transformation = DataTransformation(db_uri, 'production')
-
-# Call the transform_and_write_data_production method
-# data_transformation.filter_and_write_data_production(32, 'productionemployees')
-
-
-# Filter out average hourly earnings for all employees
-
-# Create an instance of the DataTransformation class
-# data_transformation = DataTransformation(db_uri, 'allemployeesearnweek')
-
-# Call the transform_and_write_data_production method
-# data_transformation.filter_and_write_data_production(13, 'allemployeesearnings')
-
-
-# Filter all employees based on production records
-# Create an instance of the DataTransformation class
-data_transformation = DataTransformation(db_uri, 'filtered_allemployees')
-
-# Call the filter_allemployees_based_on_production method
-data_transformation.filter_allemployees_based_on_production("production_new", "allemployeesearnweek_new")
+except Exception as e:
+    print(f"An error occurred: {e}")

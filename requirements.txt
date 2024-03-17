@@ -1,0 +1,6 @@
+# requirement.txt
+
+# Add your Python libraries here
+pandas
+sqlalchemy
+python-dotenv

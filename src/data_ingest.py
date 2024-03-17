@@ -1,7 +1,5 @@
 import pandas as pd
 from sqlalchemy import create_engine
-import os
-from dotenv import load_dotenv
 
 class DataIngest:
     def __init__(self, data_path, db_uri):
