@@ -34,19 +34,9 @@ class DataIngest:
                 break  # Stop the loop if an error occurs
 
 
-# Loading environment variables
-load_dotenv()
-db_uri = os.getenv('DATABASE_URL')
 
-# Ensure the .env file contains DATABASE_URL or directly assign db_uri here
-data_path = '../data/ce.data.90a.Government.Employment.txt'  # Make sure to use your actual data file path
-table_name = 'government'  # Make sure this matches your actual PostgreSQL table name
 
-# Initialize the DataIngest object with your data path and database URI
-ingestor = DataIngest(data_path, db_uri)
 
-# Call the correct method to read the data from the CSV file and write it to the database
-ingestor.read_and_write_data_in_chunks(table_name)
 
 
 

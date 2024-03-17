@@ -26,6 +26,13 @@ Both `.env` and `.conf` files are not in the repository.
 
 ## Results
 
+In order to run postgREST we can use:
+
+```{bash}
+curl http://localhost:3000/<table_name>
+
+```
+
 My results have the next structure when I called the rest api:
 ```
 {"date":"September 2020","valueInThousands":544.5}, 
